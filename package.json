@@ -1,0 +1,19 @@
+{
+  "name": "explosion-shoujo.js",
+  "version": "1.0.0",
+  "description": "A js bomberman clone",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bomberman"
+  ],
+  "author": "deusprogrammer",
+  "license": "ISC",
+  "dependencies": {
+    "p2": "^0.7.1",
+    "phaser": "^2.6.2",
+    "pixi.js": "2.2.x"
+  }
+}
