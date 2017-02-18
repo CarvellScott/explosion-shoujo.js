@@ -24,8 +24,9 @@ var tilemap =
 ]
 
 var MOVEMENT_VELOCITY = 200;
-var ALLOWED_DISTANCE = 15;
+var ALLOWED_DISTANCE = 20;
 var BB_ADJUST = 0;
+
 var blockSize = 48;
 var xBlocks = 15;
 var yBlocks = 15;
@@ -127,14 +128,14 @@ function update() {
     var hitPlatform = game.physics.arcade.collide(player, blocks);
 
     if (hitPlatform) {
-		var delta = findDeltaFromPassing();
+    	var delta = findDeltaFromPassing();
 
 		var distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
 
 		if (distance <= ALLOWED_DISTANCE) {
 			adjustToCurrentBlock();
 		}
-    }
+	}
 }
 
 function adjustToCurrentBlock() {
@@ -155,8 +156,11 @@ function findDeltaFromPassing() {
 	return delta;
 }
 
+/*
 function isAdjacentBlockPassable() {
-	adjacentBlock = {};
+	console.log(JSON.stringify(player.body.touching));
+
+	var adjacentBlock = {};
 	if (player.body.touching.up) {
 		adjacentBlock.x = player.block.x;
 		adjacentBlock.y = player.block.y - 1;
@@ -169,6 +173,8 @@ function isAdjacentBlockPassable() {
 	} else if (player.body.touching.right) {
 		adjacentBlock.x = player.block.x + 1;
 		adjacentBlock.y = player.block.y;
+	} else {
+		return true;
 	}
 
 	if (tilemap[adjacentBlock.y][adjacentBlock.x] != '*' || tilemap[adjacentBlock.y][adjacentBlock.x] != '#') {
@@ -177,3 +183,4 @@ function isAdjacentBlockPassable() {
 		return false;
 	}
 }
+*/
