@@ -23,7 +23,7 @@ var tilemap =
 	[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "],
 ]
 
-var MOVEMENT_VELOCITY = 200;
+var MOVEMENT_VELOCITY = 250;
 var ALLOWED_DISTANCE = 20;
 var BB_ADJUST = 0;
 
@@ -33,21 +33,25 @@ var yBlocks = 15;
 
 var game = new Phaser.Game(blockSize * xBlocks, blockSize * yBlocks, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 var player;
+
 var cursors;
+var bombButton;
+
 var blocks;
 
 function preload() {
 	game.load.image('block', 'images/block.png');
 	game.load.image('break', 'images/breakable.png');
+	game.load.image('bomb', 'images/bomb.png');
 	game.load.spritesheet('actor1', 'images/actor4.png', 48, 48);
 }
 
 function create() {
+	game.stage.backgroundColor = "#00FF00";
 	game.physics.startSystem(Phaser.Physics.ARCADE);
 
 	player = game.add.sprite(0, 0, 'actor1');
 	blocks = game.add.group();
-
 
 	blocks.enableBody = true;
 
@@ -70,12 +74,14 @@ function create() {
 
     player.block = {};
     player.center = {};
+    player.direction = "down";
 
     game.physics.arcade.enable(player);
     player.body.setSize(blockSize - BB_ADJUST, blockSize - BB_ADJUST, BB_ADJUST/2, BB_ADJUST/2);
     player.body.collideWorldBounds = true;
 
     cursors = game.input.keyboard.createCursorKeys();
+    bombButton = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
 }
 
 function update() {
@@ -97,6 +103,7 @@ function update() {
         player.body.velocity.x = -MOVEMENT_VELOCITY;
 
         player.animations.play('left');
+        player.direction = "left";
     }
     else if (cursors.right.isDown)
     {
@@ -104,6 +111,7 @@ function update() {
         player.body.velocity.x = MOVEMENT_VELOCITY;
 
         player.animations.play('right');
+        player.direction = "right";
     }
     else if (cursors.down.isDown)
     {
@@ -111,6 +119,7 @@ function update() {
         player.body.velocity.y = MOVEMENT_VELOCITY;
 
         player.animations.play('down');
+        player.direction = "down";
     }
     else if (cursors.up.isDown)
     {
@@ -118,6 +127,7 @@ function update() {
         player.body.velocity.y = -MOVEMENT_VELOCITY;
 
         player.animations.play('up');
+        player.direction = "up";
     }
     else
     {
@@ -125,9 +135,15 @@ function update() {
         player.animations.stop();
     }
 
+    if (bombButton.isDown) {
+    	player.body.velocity.x = 0;
+    	player.body.velocity.y = 0;
+    	placeBomb();
+    }
+
     var hitPlatform = game.physics.arcade.collide(player, blocks);
 
-    if (hitPlatform) {
+    if (hitPlatform && isAdjacentBlockPassable()) {
     	var delta = findDeltaFromPassing();
 
 		var distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
@@ -138,8 +154,27 @@ function update() {
 	}
 }
 
+function placeBomb() {
+	var bombBlock = player.block;
+	if (player.direction == "down") {
+		bombBlock.y += 1;
+	} else if (player.direction == "up") {
+		bombBlock.y -= 1;
+	} else if (player.direction == "right") {
+		bombBlock.x += 1;
+	} else if (player.direction == "left") {
+		bombBlock.x -= 1;
+	}
+
+	console.log(tilemap[bombBlock.y][bombBlock.x]);
+
+	if (tilemap[bombBlock.y][bombBlock.x] != "*" && tilemap[bombBlock.y][bombBlock.x] != "#") {
+		var bomb = blocks.create(bombBlock.x * blockSize, bombBlock.y * blockSize, 'bomb');
+		bomb.body.immovable = true;
+	}
+}
+
 function adjustToCurrentBlock() {
-	console.log("ADUJUSTING");
 	player.x = player.block.x * blockSize;
 	player.y = player.block.y * blockSize;
 }
@@ -156,31 +191,29 @@ function findDeltaFromPassing() {
 	return delta;
 }
 
-/*
 function isAdjacentBlockPassable() {
 	console.log(JSON.stringify(player.body.touching));
 
 	var adjacentBlock = {};
-	if (player.body.touching.up) {
+	if (player.direction == "up") {
 		adjacentBlock.x = player.block.x;
 		adjacentBlock.y = player.block.y - 1;
-	} else if (player.body.touching.down) {
+	} else if (player.direction == "down") {
 		adjacentBlock.x = player.block.x;
 		adjacentBlock.y = player.block.y + 1;
-	} else if (player.body.touching.left) {
+	} else if (player.direction == "left") {
 		adjacentBlock.x = player.block.x - 1;
 		adjacentBlock.y = player.block.y;
-	} else if (player.body.touching.right) {
+	} else if (player.direction == "right") {
 		adjacentBlock.x = player.block.x + 1;
 		adjacentBlock.y = player.block.y;
 	} else {
 		return true;
 	}
 
-	if (tilemap[adjacentBlock.y][adjacentBlock.x] != '*' || tilemap[adjacentBlock.y][adjacentBlock.x] != '#') {
+	if (tilemap[adjacentBlock.y][adjacentBlock.x] != '*' && tilemap[adjacentBlock.y][adjacentBlock.x] != '#') {
 		return true;
 	} else {
 		return false;
 	}
 }
-*/
