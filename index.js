@@ -36,6 +36,7 @@ var player;
 
 var cursors;
 var bombButton;
+var explosionButton;
 
 var blocks;
 
@@ -43,6 +44,7 @@ function preload() {
 	game.load.image('block', 'images/block.png');
 	game.load.image('break', 'images/breakable.png');
 	game.load.image('bomb', 'images/bomb.png');
+    game.load.image('explosion', 'images/explosion.png');
 	game.load.spritesheet('actor1', 'images/actor4.png', 48, 48);
 }
 
@@ -82,6 +84,7 @@ function create() {
 
     cursors = game.input.keyboard.createCursorKeys();
     bombButton = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
+    explosionButton = game.input.keyboard.addKey(Phaser.KeyCode.X);
 }
 
 function update() {
@@ -140,6 +143,11 @@ function update() {
     	player.body.velocity.y = 0;
     	placeBomb();
     }
+    
+    // TODO <CS>: Explosions must get placed by bombs upon detonation.
+    if (explosionButton.isDown) {
+        placeExplosion();
+    }
 
     var hitPlatform = game.physics.arcade.collide(player, blocks);
 
@@ -172,6 +180,52 @@ function placeBomb() {
 		var bomb = blocks.create(bombBlock.x * blockSize, bombBlock.y * blockSize, 'bomb');
 		bomb.body.immovable = true;
 	}
+}
+
+function blockIsNotWall(x,y) {
+    return (tilemap[y][x] != "*");
+}
+
+// TODO <CS>: Should probably take in coordinates here. Whatever's the equivalent of a vector2 in phaser.
+function placeExplosion() {
+    var explosionOrigin = player.block;
+    // TODO <CS>: Get rid of this magic number by associating it with player powerup acquisition.
+    var explosionRange = 4;
+    var explosionCoords = [];
+    var rt = "rt", up = "up", lf = "lf", dn = "dn";
+    var maxRanges = {rt: 0, dn: 0, lf: 0, up: 0};
+    
+    for (var i = 1; i < explosionRange; i++) {
+        if (maxRanges[rt] == i - 1 && blockIsNotWall(explosionOrigin.x + i, explosionOrigin.y)) {
+            maxRanges[rt] += 1;
+            explosionCoords.push({"x": explosionOrigin.x + i, "y": explosionOrigin.y});
+        }
+
+        if (maxRanges[up] == i - 1 && blockIsNotWall(explosionOrigin.x, explosionOrigin.y - i)) {
+            maxRanges[up] += 1;
+            explosionCoords.push({"x": explosionOrigin.x, "y": explosionOrigin.y - i});
+        }
+        
+        if (maxRanges[lf] == i - 1 && blockIsNotWall(explosionOrigin.x - i, explosionOrigin.y)) {
+            maxRanges[lf] += 1;
+            explosionCoords.push({"x": explosionOrigin.x - i, "y": explosionOrigin.y});
+        }
+        
+        if (maxRanges[dn] == i - 1 && blockIsNotWall(explosionOrigin.x, explosionOrigin.y + i)) {
+            maxRanges[dn] += 1;
+            explosionCoords.push({"x": explosionOrigin.x, "y": explosionOrigin.y + i});
+        }
+    }
+    
+    explosionCoords.push({"x": explosionOrigin.x, "y": explosionOrigin.y});
+   
+    //console.log("ranges: " + JSON.stringify(maxRanges) + " explosionCoords: " + JSON.stringify(explosionCoords));
+    for (i in explosionCoords) {
+        var point = explosionCoords[i];
+        var explosion = blocks.create(point["x"] * blockSize, point["y"] * blockSize, 'explosion');
+        explosion.body.immovable = true;
+        explosion.lifespan = 250;
+    }
 }
 
 function adjustToCurrentBlock() {
